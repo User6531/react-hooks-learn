@@ -1,18 +1,15 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useReducer} from 'react';
 import TodoList from './TodoList';
 import Context from './context/context';
-
+import reducer from './reducer/reducer';
 
 export default function App() {
 
-  const [todos, setTodos] = useState([]);
-  const [todoTitle, setTodoTitle] = useState('');
-
-
-  useEffect (()=> {
-    const temp = localStorage.getItem('todos') || [];
-    setTodos(JSON.parse(temp));
-  }, [])
+  const InitialState =  {
+    todos: JSON.parse(localStorage.getItem('todos')) || [],
+    todoTitle: '',
+  };
+  const [{todos, todoTitle}, dispatch] = useReducer(reducer, InitialState);
 
   useEffect (()=> {
     localStorage.setItem('todos', JSON.stringify(todos));
@@ -20,44 +17,28 @@ export default function App() {
 
   const addTodo = e => {
     if (e.key === 'Enter') {
-      setTodos([
-        ...todos, {
-          id: Math.floor(Math.random()) + Date.now(),
-          title: todoTitle,
-          completed: false,
-        }
-      ])
-      setTodoTitle('');
+      dispatch({
+        type: 'ADD',
+        payloaded: todoTitle,
+      })
+      dispatch({
+        type: 'ADD_TITLE',
+        payloaded: '',
+      })
     }
   } 
-  const delleteTodo = (id) => {
-    let newTodos = [];
-    todos.map(item=> {
-      if (item.id !== id) {
-        newTodos.push(item);
-      }
-      return item;
-    });
-    setTodos(newTodos);
-  }
-  const checkedTodo = (id) => {
-    setTodos(todos.map(item=>{
-      if (item.id === id) {
-        item.completed = !item.completed
-      }
-      return item;
-    }));
-  };
- 
   return (
-    <Context.Provider value={{delleteTodo, checkedTodo}}>
+    <Context.Provider value={{dispatch}}>
       <div className="container">
         <h1>Todo app</h1>
 
           <div className="input-field">
             <input type="text" 
               value={todoTitle}
-              onChange = {(event) => setTodoTitle(event.target.value)}
+              onChange = {(event) => dispatch({
+                type: 'ADD_TITLE',
+                payloaded: event.target.value,
+              })}
               onKeyPress = {addTodo}
             />
             <label>Todo name</label>
